@@ -65,6 +65,9 @@ class FlowSize {
             int flowId = p.flowId;
             for (int i = 0; i < hashFunction.length; i++) {
                 int hashedVal = (hashFunction[i] ^ flowId) % counters[i].length;
+                if(hashedVal < 0) {
+                    hashedVal += counters[i].length;
+                }
                 counters[i][hashedVal] += p.numPackets;
             }
         }
@@ -76,6 +79,9 @@ class FlowSize {
             int min = Integer.MAX_VALUE;
             for (int i = 0; i < hashFunction.length; i++) {
                 int hashedVal = (hashFunction[i] ^ flowId) % counters[i].length;
+                if(hashedVal < 0) {
+                    hashedVal += counters[i].length;
+                }
                 min = Math.min(min, counters[i][hashedVal]);
             }
             p.put(min);
@@ -92,14 +98,15 @@ class FlowSize {
     }
 
     public static void counterSketch(int[][] counters, int[] hashFunction, Map<String, Packet> mapping, String[] flowMap) {
-        int bitSize = Integer.toBinaryString(counters[0].length).length();
         for (String s: mapping.keySet()) {
             Packet p = mapping.get(s);
             int flowId = p.flowId;
             for (int i = 0; i < hashFunction.length; i++) {
                 int hashedVal = (hashFunction[i] ^ flowId) % counters[i].length;
-                int[] bits = getBinary(hashedVal, bitSize);
-                if(bits[0] == 1) {
+                if(hashedVal < 0) {
+                    if(hashedVal < 0) {
+                        hashedVal += counters[0].length;
+                    }
                     counters[i][hashedVal] += p.numPackets;
                 } else {
                     counters[i][hashedVal] -= p.numPackets;
@@ -114,8 +121,10 @@ class FlowSize {
             List<Integer> e = new ArrayList<>();
             for (int i = 0; i < hashFunction.length; i++) {
                 int hashedVal = (hashFunction[i] ^ flowId) % counters[i].length;
-                int[] bits = getBinary(hashedVal, bitSize);
-                if(bits[0] == 1) {
+                if(hashedVal < 0) {
+                    if(hashedVal < 0) {
+                        hashedVal += counters[0].length;
+                    }
                     e.add(counters[i][hashedVal]);
                 } else {
                     e.add(-1 * counters[i][hashedVal]);
@@ -129,7 +138,7 @@ class FlowSize {
             } else {
                 p.put(e.get(e.size()/2));
             }
-            avgError += p.estimatedSize - p.numPackets;
+            avgError += Math.abs(p.estimatedSize - p.numPackets);
         }
 
         Arrays.sort(flowMap, new Comparator<String>() {
@@ -197,7 +206,7 @@ class FlowSize {
     
     public static int getRandom() {
         Random r = new Random();
-        return r.nextInt(Integer.MAX_VALUE);
+        return r.nextInt(Integer.MAX_VALUE) + Integer.MIN_VALUE/2;
     }
 }
 
