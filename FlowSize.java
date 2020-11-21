@@ -103,10 +103,9 @@ class FlowSize {
             int flowId = p.flowId;
             for (int i = 0; i < hashFunction.length; i++) {
                 int hashedVal = (hashFunction[i] ^ flowId) % counters[i].length;
-                if(hashedVal < 0) {
-                    if(hashedVal < 0) {
-                        hashedVal += counters[0].length;
-                    }
+                int[] bits = getBinary(Math.abs(hashedVal), 32, hashedVal < 0 ? true : false);
+                if(bits[1] == 1) {
+                    hashedVal += counters[0].length;
                     counters[i][hashedVal] += p.numPackets;
                 } else {
                     counters[i][hashedVal] -= p.numPackets;
@@ -121,10 +120,9 @@ class FlowSize {
             List<Integer> e = new ArrayList<>();
             for (int i = 0; i < hashFunction.length; i++) {
                 int hashedVal = (hashFunction[i] ^ flowId) % counters[i].length;
-                if(hashedVal < 0) {
-                    if(hashedVal < 0) {
-                        hashedVal += counters[0].length;
-                    }
+                int[] bits = getBinary(Math.abs(hashedVal), 32, hashedVal < 0 ? true : false);
+                if(bits[1] == 1) {
+                    hashedVal += counters[0].length;
                     e.add(counters[i][hashedVal]);
                 } else {
                     e.add(-1 * counters[i][hashedVal]);
@@ -172,8 +170,11 @@ class FlowSize {
         }
     }
 
-    public static int[] getBinary(int n, int bits) {
+    public static int[] getBinary(int n, int bits, boolean neg) {
         int[] arr = new int[bits];
+        if(neg) {
+            Arrays.fill(arr, 1);
+        }
         int j = 0;
         while (n >= 1) {
            arr [bits-j-1] = n % 2;
@@ -188,12 +189,12 @@ class FlowSize {
             FileWriter file = new FileWriter(filename+".txt");
             BufferedWriter output = new BufferedWriter(file);
             
-            output.write("The average error among all flows- "+ans+"\n");
+            output.write("The average error among all flows: "+ans+"\n");
             output.write("\nThe flows with largest estimated sizes (Top 100)");
             int count = 0;
             for (String s : flowMap) {
                 Packet p = mapping.get(s);
-                output.write("\nFlow ID: "+s+" Estimated size: "+p.estimatedSize+" True size: "+p.numPackets);
+                output.write(String.format("\nFlow ID: %15s\tEstimated size: %5s\tTrue size: %5s",s,p.estimatedSize,p.numPackets));
                 if(count++ == 100) {
                     break;
                 }
